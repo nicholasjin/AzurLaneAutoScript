@@ -10,10 +10,7 @@ config/*.ini
 !alas_kr.pyw
 dev_tools/debug_tools
 .idea
-
-/screenshots/*
-!/screenshots/item_template_archive
-
+/screenshots
 /python
 /python-3.7.6.amd64
 /scripts

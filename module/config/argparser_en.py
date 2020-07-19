@@ -9,6 +9,7 @@ from alas import AzurLaneAutoScript
 from module.config.dictionary import dic_true_eng_to_eng, dic_eng_to_true_eng
 from module.config.update import get_config
 from module.logger import pyw_name
+from module.research.preset import DICT_FILTER_PRESET
 
 
 try:
@@ -22,7 +23,9 @@ except Exception:
 
 @Gooey(
     optional_cols=2,
-    program_name=pyw_name.capitalize(), image_dir='assets/gooey',
+    program_name=pyw_name.capitalize(),
+    image_dir='assets/gooey',
+    language_dir='assets/gooey',
     sidebar_title='Function',
     terminal_font_family='Consolas',
     language='english',
@@ -45,6 +48,7 @@ def main(ini_name=''):
     event_latest = sorted([f for f in event_folder], reverse=True)[0]
     event_folder = [dic_eng_to_true_eng.get(f, f) for f in event_folder][::-1]
     event_latest = dic_eng_to_true_eng.get(event_latest, event_latest)
+    research_preset = [dic_eng_to_true_eng.get(f, f) for f in ['customized'] + list(DICT_FILTER_PRESET.keys())]
 
     raid_latest = 'Air_Raid_Drills_with_Essex'
 
@@ -185,7 +189,7 @@ def main(ini_name=''):
     reward_parser = subs.add_parser('reward')
     reward_condition = reward_parser.add_argument_group('Triggering conditions', 'Need to Press start to save your settings, after running it will enter the on-hook vegetable collection mode')
     reward_condition.add_argument('--enable_reward', default=default('--enable_reward'), choices=['yes', 'no'])
-    reward_condition.add_argument('--reward_interval', default=default('--reward_interval'), choices=['20', '30', '60'], help='How many minutes to trigger collection')
+    reward_condition.add_argument('--reward_interval', default=default('--reward_interval'), help='How many minutes to trigger collection')
     reward_condition.add_argument('--enable_daily_reward', default=default('--enable_daily_reward'), choices=['yes', 'no'], help='Run daily as a part of reward')
 
     reward_oil = reward_parser.add_argument_group('Oil supplies', '')
@@ -227,11 +231,21 @@ def main(ini_name=''):
 
     reward_tactical = reward_parser.add_argument_group('Classroom', 'Only support continuation of skill books, not new skills')
     reward_tactical.add_argument('--enable_tactical_reward', default=default('--enable_tactical_reward'), choices=['yes', 'no'])
-    reward_tactical.add_argument('--tactical_night_range', default=default('--tactical_night_range'), help='Format 23:30-06:30')
-    reward_tactical.add_argument('--tactical_book_tier', default=default('--tactical_book_tier'), choices=['3', '2', '1'], help='Wich skill book will use first\nT3 is a gold book, T2 is a purple book, T1 is a blue book')
     reward_tactical.add_argument('--tactical_exp_first', default=default('--tactical_exp_first'), choices=['yes', 'no'], help='Choose Yes, give priority to the 150% bonus \nSelect No, give priority to the skills book with the same rarity')
-    reward_tactical.add_argument('--tactical_book_tier_night', default=default('--tactical_book_tier_night'), choices=['3', '2', '1'])
-    reward_tactical.add_argument('--tactical_exp_first_night', default=default('--tactical_exp_first_night'), choices=['yes', 'no'])
+    # reward_tactical.add_argument('--tactical_night_range', default=default('--tactical_night_range'), help='Format 23:30-06:30')
+    reward_tactical.add_argument('--tactical_book_tier_max', default=default('--tactical_book_tier_max'), choices=['3', '2', '1'], help='Wich skill book will use first\nT3 is a gold book, T2 is a purple book, T1 is a blue book\ntier_max should greater than or equal to tier_min')
+    reward_tactical.add_argument('--tactical_book_tier_min', default=default('--tactical_book_tier_min'), choices=['3', '2', '1'], help='Minimal tier to choose.')
+    # reward_tactical.add_argument('--tactical_book_tier_night', default=default('--tactical_book_tier_night'), choices=['3', '2', '1'])
+    # reward_tactical.add_argument('--tactical_exp_first_night', default=default('--tactical_exp_first_night'), choices=['yes', 'no'])
+
+    reward_research = reward_parser.add_argument_group('Research', 'If set research_filter_preset=customized, read doc/filter_string_en_cn.md first')
+    reward_research.add_argument('--enable_research_reward', default=default('--enable_research_reward'), choices=['yes', 'no'])
+    research_input = reward_research.add_argument_group('Research input', '')
+    research_input.add_argument('--research_use_cube', default=default('--research_use_cube'), choices=['yes', 'no'])
+    research_input.add_argument('--research_use_coin', default=default('--research_use_coin'), choices=['yes', 'no'])
+    research_input.add_argument('--research_use_part', default=default('--research_use_part'), choices=['yes', 'no'])
+    research_output = reward_research.add_argument_group('Research output', '')
+    research_output.add_argument('--research_filter_preset', default=default('--research_filter_preset'), choices=research_preset)
 
     # ==========emulator==========
     emulator_parser = subs.add_parser('emulator')
@@ -289,8 +303,10 @@ def main(ini_name=''):
     exercise.add_argument('--exercise_low_hp_confirm', default=default('--exercise_low_hp_confirm'), help='After HP is below the threshold, it will retreat after a certain period of time \nRecommended 1.0 ~ 3.0')
     exercise.add_argument('--exercise_equipment', default=default('--exercise_equipment'), help='Change equipment before playing, unload equipment after playing, do not need to fill in 0 \ncomma, such as 3, 1, 0, 1, 1, 0')
 
+    # event_daily_ab
     event_bonus = daily_parser.add_argument_group('Event Daily Bonus', 'bonus for first clear each day')
     event_bonus.add_argument('--event_name_ab', default=event_latest, choices=event_folder, help='There a dropdown menu with many options')
+    event_bonus.add_argument('--event_ab_chapter', default=default('--event_ab_chapter'), choices=['chapter_ab', 'chapter_abcd'], help='Chapter with PT bonus')
 
     # Raid daily
     raid_bonus = daily_parser.add_argument_group('Raid settings', '')
