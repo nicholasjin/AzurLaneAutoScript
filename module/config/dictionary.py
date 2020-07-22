@@ -21,6 +21,12 @@ dic_daily = {
     'index_1': 1,
     'index_2': 2,
     'index_3': 3,
+    'high_level': 1,
+    'medium_level': 2,
+    'low_level': 3,
+    'firepower_high_level': 1,
+    'air_high_level': 2,
+    'firepower_low_level': 3,
 }
 dic_true_eng_to_eng = {
     # Function
@@ -224,6 +230,8 @@ dic_true_eng_to_eng = {
     'max_exp': 'max_exp',
     'max_ranking': 'max_ranking',
     'good_opponent': 'good_opponent',
+    'easiest': 'easiest',
+    'easiest_else_exp': 'easiest_else_exp',
     'normal': 'normal',
     'hard': 'hard',
     'easy': 'easy',
@@ -450,6 +458,8 @@ dic_chi_to_eng = {
     '经验最多': 'max_exp',
     '排名最前': 'max_ranking',
     '福利队': 'good_opponent',
+    '最简单': 'easiest',
+    '先最简单再经验最多': 'easiest_else_exp',
     '普通': 'normal',
     '困难': 'hard',
     '简单': 'easy',

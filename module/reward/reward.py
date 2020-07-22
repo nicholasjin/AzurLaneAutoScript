@@ -28,6 +28,7 @@ class Reward(RewardCommission, RewardTacticalClass, RewardResearch, LoginHandler
         self.handle_tactical_class()
 
         self.handle_research_reward()
+        self.ui_goto(page_main, skip_first_screenshot=True)
         self._reward_mission()
 
         self.config.REWARD_LAST_TIME = datetime.now()
@@ -75,6 +76,7 @@ class Reward(RewardCommission, RewardTacticalClass, RewardResearch, LoginHandler
                     (self.config.ENABLE_OIL_REWARD and self.appear_then_click(OIL, interval=60))
                     or (self.config.ENABLE_COIN_REWARD and self.appear_then_click(COIN, interval=60))
                     or (self.config.ENABLE_COMMISSION_REWARD and self.appear_then_click(REWARD_1, interval=1))
+                    or (self.config.ENABLE_RESEARCH_REWARD and not self.config.ENABLE_SAVE_GET_ITEMS and self.appear_then_click(REWARD_3, interval=1))
             ):
                 exit_timer.reset()
                 click_timer.reset()
