@@ -52,14 +52,19 @@ class Camera(InfoHandler):
         vector = np.array([0.5, 0.5]) - self.view.center_offset + vector
         self._map_swipe(vector)
 
-    def focus_to_grid_center(self):
+    def focus_to_grid_center(self, tolerance=None):
         """
         Re-focus to the center of a grid.
+
+        Args:
+            tolerance (float): 0 to 0.5. If None, use MAP_GRID_CENTER_TOLERANCE
 
         Returns:
             bool: Map swiped.
         """
-        if np.any(np.abs(self.view.center_offset - 0.5) > self.config.MAP_GRID_CENTER_TOLERANCE):
+        if not tolerance:
+            tolerance = self.config.MAP_GRID_CENTER_TOLERANCE
+        if np.any(np.abs(self.view.center_offset - 0.5) > tolerance):
             logger.info('Re-focus to grid center.')
             self.map_swipe((0, 0))
             return True
@@ -190,7 +195,6 @@ class Camera(InfoHandler):
             if np.all(np.abs(vector) <= 0):
                 break
 
-
     def full_scan(self, queue=None, must_scan=None, battle_count=0, mystery_count=0, siren_count=0, carrier_count=0,
                   mode='normal'):
         """Scan the whole map.
@@ -205,7 +209,7 @@ class Camera(InfoHandler):
             mode (str): Scan mode, such as 'normal', 'carrier', 'movable'
 
         """
-        logger.info('Full scan start')
+        logger.info(f'Full scan start, mode={mode}')
         self.map.reset_fleet()
 
         queue = queue if queue else self.map.camera_data
@@ -213,7 +217,7 @@ class Camera(InfoHandler):
             queue = queue.add(must_scan)
 
         while len(queue) > 0:
-            if self.map.missing_is_none(battle_count, mystery_count, siren_count, carrier_count):
+            if self.map.missing_is_none(battle_count, mystery_count, siren_count, carrier_count, mode):
                 if must_scan and queue.count != queue.delete(must_scan).count:
                     logger.info('Continue scanning.')
                     pass
@@ -223,6 +227,7 @@ class Camera(InfoHandler):
 
             queue = queue.sort_by_camera_distance(self.camera)
             self.focus_to(queue[0])
+            self.focus_to_grid_center(0.25)
             self.view.predict()
             success = self.map.update(grids=self.view, camera=self.camera, mode=mode)
             if not success:
@@ -231,9 +236,7 @@ class Camera(InfoHandler):
 
             queue = queue[1:]
 
-        self.map.missing_predict(battle_count, mystery_count, siren_count, carrier_count)
-
-
+        self.map.missing_predict(battle_count, mystery_count, siren_count, carrier_count, mode)
         self.map.show()
 
     def in_sight(self, location, sight=None):
