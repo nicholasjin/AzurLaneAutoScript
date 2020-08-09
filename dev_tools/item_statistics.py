@@ -1,23 +1,25 @@
-import os
+import shutil
 
-# os.chdir('../')
+import numpy as np
+from tqdm import tqdm
+
 import module.config.server as server
 
+<<<<<<< HEAD
 
 server.server = 'en'  # Don't need to edit, it's used to avoid error.
 
 print(os.getcwd())
+=======
+server.server = 'cn'  # Edit your server here.
+>>>>>>> 20bfc4f8fc37908f15e5748fa538289e1ac74255
 
-import numpy as np
-from PIL import Image
-import cv2
-import time
-from module.combat.assets import GET_ITEMS_1, GET_ITEMS_2
-from module.handler.assets import INFO_BAR_1
-from module.base.button import ButtonGrid, Button
-from module.ocr.ocr import Ocr
 from module.logger import logger
+from module.statistics.battle_status import BattleStatusStatistics
+from module.statistics.get_items import GetItemsStatistics
+from module.statistics.utils import *
 
+<<<<<<< HEAD
 
 """
 Set your folder here
@@ -61,10 +63,18 @@ class AmountOcr(Ocr):
         return result_list
 
     def after_process(self, raw):
+=======
+STATUS_ITEMS_INTERVAL = 10
+
+
+class DropStatistics(BattleStatusStatistics, GetItemsStatistics):
+    def __init__(self, folder):
+>>>>>>> 20bfc4f8fc37908f15e5748fa538289e1ac74255
         """
-        Returns:
-            int:
+        Args:
+            folder (str): Such as <your_drop_screenshot_folder>/campaign_7_2
         """
+<<<<<<< HEAD
         raw = super().after_process(raw)
         if not raw:
             result = 0
@@ -250,87 +260,95 @@ class Item:
     @property
     def has_amount(self):
         return 'T' in self.name or self.name == '物资'
+=======
+        self.folder = folder
+        self.template_folder = os.path.join(self.folder, 'item_template')
+        if not os.path.exists(self.template_folder):
+            shutil.copytree('./assets/stats_basic', self.template_folder)
+        self.load_template_folder(self.template_folder)
+        self.battle_status = load_folder(os.path.join(folder, 'status'))
+        self.get_items = load_folder(os.path.join(folder, 'get_items'))
+        self.battle_status_timestamp = np.array([int(f) for f in self.battle_status])
 
-    def get_template(self):
-        # return self.image.crop((5, 5, 90, 68))
-        return self.image.crop((40, 21, 89, 70))
+    def _items_to_status(self, get_items):
+        """
+        Args:
+            get_items (str): get_items image filename.
+>>>>>>> 20bfc4f8fc37908f15e5748fa538289e1ac74255
 
-    def get_amount(self):
-        return self.image.crop((60, 75, 91, 88))
-
-
-class Items:
-    def __init__(self, timestamp):
-        self.timestamp = timestamp
-        self.get_items = Image.open(f'{GET_ITEMS_FOLDER}/{timestamp}.png').convert('RGB')
-
-        # Enemy genre
-        interval = np.abs(BATTLE_STATUS_TIMESTAMP - timestamp)
+        Returns:
+            str: battle_status image filename.
+        """
+        interval = np.abs(self.battle_status_timestamp - int(get_items))
         if np.min(interval) > STATUS_ITEMS_INTERVAL * 1000:
-            raise ImageError(f'Timestamp: {timestamp}, battle_status image not found.')
-        self.status_timestamp = BATTLE_STATUS_TIMESTAMP[np.argmin(interval)]
-        self.enemy = 'Default_enemy'
+            raise ImageError(f'Timestamp: {get_items}, battle_status image not found.')
+        return str(self.battle_status_timestamp[np.argmin(interval)])
 
-        # get_item image properties
-        if INFO_BAR_1.appear_on(self.get_items):
-            raise ImageError(f'Timestamp: {timestamp}, Info bar')
-        if GET_ITEMS_1.appear_on(self.get_items):
-            self.row = 1
-            self.is_odd = self.get_is_odd(self.get_items)
-            self.grids = ITEM_GRIDS_1_ODD if self.is_odd else ITEM_GRIDS_1_EVEN
-        elif GET_ITEMS_2.appear_on(self.get_items):
-            self.row = 2
-            self.is_odd = True
-            self.grids = ITEM_GRIDS_2
-        else:
-            raise ImageError(f'Timestamp: {timestamp}, Image is not a get_items image.')
+    def extract_template(self, image=None, folder=None):
+        """
+        Extract and save new templates into 'item_template' folder.
+        """
+        for ts, file in tqdm(self.get_items.items()):
+            try:
+                image = load_image(file)
+                super().extract_template(image, folder=self.template_folder)
+            except:
+                logger.warning(f'Error image: {ts}')
 
-        # Crop items
-        self.items = []
-        for button in self.grids.buttons():
-            item = Item(self.get_items.crop(button.area))
-            if item.is_valid:
-                self.items.append(item)
+    def stat_drop(self, timestamp):
+        """
+        Args:
+            timestamp (str): get_items image timestamp.
 
-    @staticmethod
-    def get_is_odd(image):
-        image = image.crop((628, 294, 651, 396))
-        return np.mean(np.array(image.convert('L')) > 127) > 0.1
+        Returns:
+            list: Drop data.
+        """
+        get_items = load_image(self.get_items[timestamp])
+        battle_status_timestamp = self._items_to_status(timestamp)
+        battle_status = load_image(self.battle_status[battle_status_timestamp])
 
-    def predict(self):
-        self.battle_status = Image.open(f'{BATTLE_STATUS_FOLDER}/{self.status_timestamp}.png').convert('RGB')
-        self.enemy = ENEMY_GENRE_OCR.ocr(self.battle_status)
-        enemy = self.enemy
-        # Delete wrong OCR result
-        for letter in '-一个―~(':
-            enemy = enemy.replace(letter, '')
-        self.enemy = enemy
+        enemy_name = self.stats_battle_status(battle_status)
+        items = self.stats_get_items(get_items)
+        data = [[timestamp, battle_status_timestamp, enemy_name, item.name, item.amount] for item in items]
+        return data
 
-        amount_items = [item for item in self.items if item.has_amount]
-        amount = AMOUNT_OCR.ocr([item.get_amount() for item in amount_items])
-        for a, i in zip(amount, amount_items):
-            i.amount = a
+    def generate_data(self):
+        """
+        Yields:
+            list: Drop data.
+        """
+        for ts, file in tqdm(self.get_items.items()):
+            try:
+                data = self.stat_drop(ts)
+                yield data
+            except:
+                logger.warning(f'Error image: {ts}')
 
-    def get_data(self):
-        return [[self.timestamp, self.status_timestamp, self.enemy, item.name, item.amount] for item in self.items]
 
 """
-Edit server at the top of this file first.
+Args:
+    FOLDER:   Alas drop screenshot folder.
+              Examples: '<your_drop_screenshot_folder>/campaign_7_2'
+    CSV_FILE: Csv file to save.
+              Examples: 'c72.csv'
 """
-
-"""
-These code is for testing
-Set your image name here
-Examples: 159022xxxxxxx (int)
-"""
+<<<<<<< HEAD
 # ts = 1593301640807
 # items = Items(ts)
 # for item in items.items:
 #     print(item.amount, item.name)
+=======
+FOLDER = ''
+CSV_FILE = ''
+drop = DropStatistics(FOLDER)
+>>>>>>> 20bfc4f8fc37908f15e5748fa538289e1ac74255
 
 """
-These code is for template extracting
+First run:
+    1. Uncomment this, and run.
+    2. Rename templates in <your_drop_screenshot_folder>/campaign_7_2/item_template, for example.
 """
+<<<<<<< HEAD
 from tqdm import tqdm
 for ts in tqdm([int(f.split('.')[0]) for f in os.listdir(GET_ITEMS_FOLDER)]):
     try:
@@ -338,22 +356,17 @@ for ts in tqdm([int(f.split('.')[0]) for f in os.listdir(GET_ITEMS_FOLDER)]):
     except Exception:
         logger.warning(f'Error image: {ts}')
         continue
+=======
+# drop.extract_template()
+>>>>>>> 20bfc4f8fc37908f15e5748fa538289e1ac74255
 
 """
-These code is for final statistic
-Set your csv file name here
-Examples: c64.csv
+Second Run:
+    1. Comment the code in first run.
+    2. Uncomment this, and run.
 """
-# csv_file = 'c64.csv'
 # import csv
-# from tqdm import tqdm
-# with open(csv_file, 'a', newline='') as file:
-#     writer = csv.writer(file)
-#     for ts in tqdm([int(f.split('.')[0]) for f in os.listdir(GET_ITEMS_FOLDER)]):
-#         try:
-#             items = Items(ts)
-#             items.predict()
-#             writer.writerows(items.get_data())
-#         except Exception:
-#             logger.warning(f'Error image: {ts}')
-#             continue
+# with open(CSV_FILE, 'a', newline='') as csv_file:
+#     writer = csv.writer(csv_file)
+#     for d in drop.generate_data():
+#         writer.writerows(d)
