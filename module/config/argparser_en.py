@@ -103,6 +103,7 @@ def main(ini_name=''):
     stop.add_argument('--if_count_greater_than', default=default('--if_count_greater_than'), help='How many map completions\n until ALAS enter in Reward loop.')
     stop.add_argument('--if_time_reach', default=default('--if_time_reach'), help='How many time in minutes run ALAS until stop\n. It is recommended about\n 10 minutes to complete the current attack. Format 14:59')
     stop.add_argument('--if_oil_lower_than', default=default('--if_oil_lower_than'), help='Will enter in reward loop when\ntriggered Oil limit')
+    stop.add_argument('--if_map_reach', default=default('--if_map_reach'), choices=['no', 'map_100', 'map_3_star', 'map_green'], help='If already reached, ignore this setting')
     stop.add_argument('--if_trigger_emotion_control', default=default('--if_trigger_emotion_control'), choices=['yes', 'no'], help='Will enter in reward loop when\ntriggered Mood limit')
     # stop.add_argument('--if_dock_full', default=default('--if_dock_full'), choices=['yes', 'no'])
 
@@ -168,11 +169,12 @@ def main(ini_name=''):
     hp_withdraw.add_argument('--low_hp_withdraw_threshold', default=default('--low_hp_withdraw_threshold'), help='When HP is below the threshold, retreat')
 
     # 退役选项
-    retire = setting_parser.add_argument_group('Retirement settings', 'Enhancement order by ship type is supported in alas.ini:\n Use example format \"enhance_order_string = cv > bb > ...\" to enable otherwise leave as \"enhance_order_string = \" to disable')
+    retire = setting_parser.add_argument_group('Retirement settings', '')
     retire.add_argument('--enable_retirement', default=default('--enable_retirement'), choices=['yes', 'no'])
     retire.add_argument('--retire_method', default=default('--retire_method'), choices=['enhance', 'one_click_retire', 'old_retire'])
     retire.add_argument('--retire_amount', default=default('--retire_amount'), choices=['retire_all', 'retire_10'])
     retire.add_argument('--enhance_favourite', default=default('--enhance_favourite'), choices=['yes', 'no'])
+    retire.add_argument('--enhance_order_string', default=default('--enhance_order_string'), help='Use example format "cv > bb > ..." may omit a ship type category altogether to skip otherwise leave blank to use default enhance method')
 
     rarity = retire.add_argument_group('Retirement rarity', 'The ship type selection is not supported yet. Ignore the following options when using one-key retirement')
     rarity.add_argument('--retire_n', default=default('--retire_n'), choices=['yes', 'no'], help='N')
@@ -185,10 +187,10 @@ def main(ini_name=''):
     drop.add_argument('--enable_drop_screenshot', default=default('--enable_drop_screenshot'), choices=['yes', 'no'])
     drop.add_argument('--drop_screenshot_folder', default=default('--drop_screenshot_folder'))
 
-    clear = setting_parser.add_argument_group('Wasteland mode', 'Unopened maps will stop after completion. Opened maps will ignore options, and its done if you do not open up')
-    clear.add_argument('--enable_map_clear_mode', default=default('--enable_map_clear_mode'), choices=['yes', 'no'])
-    clear.add_argument('--clear_mode_stop_condition', default=default('--clear_mode_stop_condition'), choices=['map_100', 'map_3_star', 'map_green'])
-    clear.add_argument('--map_star_clear_all', default=default('--map_star_clear_all'), choices=['index_1', 'index_2', 'index_3', 'do_not_use'], help='The first few stars are to destroy all enemy ships')
+    # clear = setting_parser.add_argument_group('Wasteland mode', 'Unopened maps will stop after completion. Opened maps will ignore options, and its done if you do not open up')
+    # clear.add_argument('--enable_map_clear_mode', default=default('--enable_map_clear_mode'), choices=['yes', 'no'])
+    # clear.add_argument('--clear_mode_stop_condition', default=default('--clear_mode_stop_condition'), choices=['map_100', 'map_3_star', 'map_green'])
+    # clear.add_argument('--map_star_clear_all', default=default('--map_star_clear_all'), choices=['index_1', 'index_2', 'index_3', 'do_not_use'], help='The first few stars are to destroy all enemy ships')
 
 
     # ==========reward==========
@@ -243,6 +245,7 @@ def main(ini_name=''):
     reward_tactical.add_argument('--tactical_book_tier_min', default=default('--tactical_book_tier_min'), choices=['3', '2', '1'], help='Minimal tier to choose.')
     # reward_tactical.add_argument('--tactical_book_tier_night', default=default('--tactical_book_tier_night'), choices=['3', '2', '1'])
     # reward_tactical.add_argument('--tactical_exp_first_night', default=default('--tactical_exp_first_night'), choices=['yes', 'no'])
+    reward_tactical.add_argument('--tactical_if_no_book_satisfied', default=default('--tactical_if_no_book_satisfied'), choices=['cancel_tactical', 'use_the_first_book'])
 
     reward_research = reward_parser.add_argument_group('Research', 'If set research_filter_preset=customized, read doc/filter_string_en_cn.md first')
     reward_research.add_argument('--enable_research_reward', default=default('--enable_research_reward'), choices=['yes', 'no'])
@@ -252,6 +255,7 @@ def main(ini_name=''):
     research_input.add_argument('--research_use_part', default=default('--research_use_part'), choices=['yes', 'no'])
     research_output = reward_research.add_argument_group('Research output', '')
     research_output.add_argument('--research_filter_preset', default=default('--research_filter_preset'), choices=research_preset)
+    research_output.add_argument('--research_filter_string', default=default('--research_filter_string'), help='Only if you are using custom preset.')
 
     # ==========emulator==========
     emulator_parser = subs.add_parser('emulator')
