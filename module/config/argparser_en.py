@@ -115,19 +115,19 @@ def main(ini_name=''):
     f1 = fleet.add_argument_group('Mob Fleet', 'Players can choose a formation before battle. Though it has no effect appearance-wise, the formations applies buffs to certain stats.\nLine Ahead: Increases Firepower and Torpedo by 15%, but reduces Evasion by 10% (Applies only to Vanguard fleet)\nDouble Line: Increases Evasion by 30%, but decreases Firepower and Torpedo by 5% (Applies only to Vanguard fleet)\nDiamond: Increases Anti-Air by 20% (no penalties, applies to entire fleet)')
     f1.add_argument('--fleet_index_1', default=default('--fleet_index_1'), choices=['1', '2', '3', '4', '5', '6'])
     f1.add_argument('--fleet_formation_1', default=default('--fleet_formation_1'), choices=['Line Ahead', 'Double Line', 'Diamond'])
-    f1.add_argument('--fleet_auto_mode_1', default=default('--fleet_auto_mode_1'), choices=['combat_auto', 'combat_manual', 'stand_still_in_the_middle'])
+    f1.add_argument('--fleet_auto_mode_1', default=default('--fleet_auto_mode_1'), choices=['combat_auto', 'combat_manual', 'stand_still_in_the_middle', 'hide_in_bottom_left'])
     f1.add_argument('--fleet_step_1', default=default('--fleet_step_1'), choices=['1', '2', '3', '4', '5', '6'], help='In event map, fleet has limit on moving, so fleet_step is how far can a fleet goes in one operation, if map cleared, it will be ignored')
 
     f2 = fleet.add_argument_group('Boss Fleet')
     f2.add_argument('--fleet_index_2', default=default('--fleet_index_2'), choices=['1', '2', '3', '4', '5', '6'])
     f2.add_argument('--fleet_formation_2', default=default('--fleet_formation_2'), choices=['Line Ahead', 'Double Line', 'Diamond'])
-    f2.add_argument('--fleet_auto_mode_2', default=default('--fleet_auto_mode_2'), choices=['combat_auto', 'combat_manual', 'stand_still_in_the_middle'])
+    f2.add_argument('--fleet_auto_mode_2', default=default('--fleet_auto_mode_2'), choices=['combat_auto', 'combat_manual', 'stand_still_in_the_middle', 'hide_in_bottom_left'])
     f2.add_argument('--fleet_step_2', default=default('--fleet_step_2'), choices=['1', '2', '3', '4', '5', '6'], help='In event map, fleet has limit on moving, so fleet_step is how far can a fleet goes in one operation, if map cleared, it will be ignored')
 
     f3 = fleet.add_argument_group('Alternate Mob Fleet')
     f3.add_argument('--fleet_index_3', default=default('--fleet_index_3'), choices=['1', '2', '3', '4', '5', '6'])
     f3.add_argument('--fleet_formation_3', default=default('--fleet_formation_3'), choices=['Line Ahead', 'Double Line', 'Diamond'])
-    f3.add_argument('--fleet_auto_mode_3', default=default('--fleet_auto_mode_3'), choices=['combat_auto', 'combat_manual', 'stand_still_in_the_middle'])
+    f3.add_argument('--fleet_auto_mode_3', default=default('--fleet_auto_mode_3'), choices=['combat_auto', 'combat_manual', 'stand_still_in_the_middle', 'hide_in_bottom_left'])
     f3.add_argument('--fleet_step_3', default=default('--fleet_step_3'), choices=['1', '2', '3', '4', '5', '6'], help='In event map, fleet has limit on moving, so fleet_step is how far can a fleet goes in one operation, if map cleared, it will be ignored')
 
     # 潜艇设置
@@ -247,7 +247,7 @@ def main(ini_name=''):
     # reward_tactical.add_argument('--tactical_exp_first_night', default=default('--tactical_exp_first_night'), choices=['yes', 'no'])
     reward_tactical.add_argument('--tactical_if_no_book_satisfied', default=default('--tactical_if_no_book_satisfied'), choices=['cancel_tactical', 'use_the_first_book'])
 
-    reward_research = reward_parser.add_argument_group('Research', 'If set research_filter_preset=customized, read doc/filter_string_en_cn.md first')
+    reward_research = reward_parser.add_argument_group('Research', 'If set research_filter_preset=customized, read https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_en first')
     reward_research.add_argument('--enable_research_reward', default=default('--enable_research_reward'), choices=['yes', 'no'])
     research_input = reward_research.add_argument_group('Research input', '')
     research_input.add_argument('--research_use_cube', default=default('--research_use_cube'), choices=['yes', 'no'])
@@ -256,6 +256,9 @@ def main(ini_name=''):
     research_output = reward_research.add_argument_group('Research output', '')
     research_output.add_argument('--research_filter_preset', default=default('--research_filter_preset'), choices=research_preset)
     research_output.add_argument('--research_filter_string', default=default('--research_filter_string'), help='Only if you are using custom preset.')
+
+    reward_buy = reward_parser.add_argument_group('Buy', 'If already bought, skip')
+    reward_buy.add_argument('--buy_meowfficer', default=default('--buy_meowfficer'), help='From 0 to 15. If no need, fill 0.')
 
     # ==========emulator==========
     emulator_parser = subs.add_parser('emulator')
@@ -369,9 +372,14 @@ def main(ini_name=''):
     semi.add_argument('--enable_semi_map_preparation', default=default('--enable_semi_map_preparation'), help='', choices=['yes', 'no'])
     semi.add_argument('--enable_semi_story_skip', default=default('--enable_semi_story_skip'), help='Note that this will automatically confirm all the prompt boxes, including the red face attack', choices=['yes', 'no'])
 
+    # ==========c11_affinity_farming==========
+    c_1_1_parser = subs.add_parser('c1-1_affinity_farming')
+    c_1_1 = c_1_1_parser.add_argument_group('c1-1_affinity_farming', 'Will auto turn off clearing mode\nWith MVP, 8 battle to 1 affnity. Without MVP, 16 battle to 1 affnity.')
+    c_1_1.add_argument('--affinity_battle_count', default=default('--affinity_battle_count'), help='Example: 32')
+
     # ==========c72_mystery_farming==========
     c_7_2_parser = subs.add_parser('c7-2_mystery_farming')
-    c_7_2 = c_7_2_parser.add_argument_group('c72_mystery_farming', '')
+    c_7_2 = c_7_2_parser.add_argument_group('c7-2_mystery_farming', '')
     c_7_2.add_argument('--boss_fleet_step_on_a3', default=default('--boss_fleet_step_on_a3'), choices=['yes', 'no'], help='A3 has enemies, G3, C3, E3')
 
     # ==========c122_leveling==========

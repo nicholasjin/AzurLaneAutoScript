@@ -115,19 +115,19 @@ def main(ini_name=''):
     f1 = fleet.add_argument_group('道中队')
     f1.add_argument('--舰队编号1', default=default('--舰队编号1'), choices=['1', '2', '3', '4', '5', '6'])
     f1.add_argument('--舰队阵型1', default=default('--舰队阵型1'), choices=['单纵阵', '复纵阵', '轮形阵'])
-    f1.add_argument('--自律模式1', default=default('--自律模式1'), choices=['自律', '手操', '中路站桩'])
+    f1.add_argument('--自律模式1', default=default('--自律模式1'), choices=['自律', '手操', '中路站桩', '躲左下角'])
     f1.add_argument('--舰队步长1', default=default('--舰队步长1'), choices=['1', '2', '3', '4', '5', '6'])
 
     f2 = fleet.add_argument_group('BOSS队')
     f2.add_argument('--舰队编号2', default=default('--舰队编号2'), choices=['不使用', '1', '2', '3', '4', '5', '6'])
     f2.add_argument('--舰队阵型2', default=default('--舰队阵型2'), choices=['单纵阵', '复纵阵', '轮形阵'])
-    f2.add_argument('--自律模式2', default=default('--自律模式2'), choices=['自律', '手操', '中路站桩'])
+    f2.add_argument('--自律模式2', default=default('--自律模式2'), choices=['自律', '手操', '中路站桩', '躲左下角'])
     f2.add_argument('--舰队步长2', default=default('--舰队步长2'), choices=['1', '2', '3', '4', '5', '6'])
 
     f3 = fleet.add_argument_group('备用道中队')
     f3.add_argument('--舰队编号3', default=default('--舰队编号3'), choices=['不使用', '1', '2', '3', '4', '5', '6'])
     f3.add_argument('--舰队阵型3', default=default('--舰队阵型3'), choices=['单纵阵', '复纵阵', '轮形阵'])
-    f3.add_argument('--自律模式3', default=default('--自律模式3'), choices=['自律', '手操', '中路站桩'])
+    f3.add_argument('--自律模式3', default=default('--自律模式3'), choices=['自律', '手操', '中路站桩', '躲左下角'])
     f3.add_argument('--舰队步长3', default=default('--舰队步长3'), choices=['1', '2', '3', '4', '5', '6'])
 
     # 潜艇设置
@@ -256,6 +256,9 @@ def main(ini_name=''):
     research_output.add_argument('--科研项目选择预设', default=default('--科研项目选择预设'), choices=research_preset)
     research_output.add_argument('--科研过滤字符串', default=default('--科研过滤字符串'), help='仅在科研预设选择为自定义时启用')
 
+    reward_buy = reward_parser.add_argument_group('商店购买', '如果已经买过则自动跳过')
+    reward_buy.add_argument('--买指挥喵', default=default('--买指挥喵'), help='从0到15, 不需要就填0')
+
     # ==========设备设置==========
     emulator_parser = subs.add_parser('设备设置')
     emulator = emulator_parser.add_argument_group('模拟器', '需要运行一次来保存选项, 会检查游戏是否启动\n若启动了游戏, 触发一次收菜')
@@ -366,6 +369,11 @@ def main(ini_name=''):
     semi = semi_parser.add_argument_group('半自动模式', '手动选敌, 自动结算, 用于出击未适配的图')
     semi.add_argument('--进图准备', default=default('--进图准备'), help='', choices=['是', '否'])
     semi.add_argument('--跳过剧情', default=default('--跳过剧情'), help='注意, 这会自动确认所有提示框, 包括红脸出击', choices=['是', '否'])
+
+    # ==========1-1Affinity farming==========
+    c_1_1_parser = subs.add_parser('1-1伏击刷好感')
+    c_1_1 = c_1_1_parser.add_argument_group('1-1伏击刷好感', '会自动关闭周回模式\n有MVP, 8场战斗涨1点好感, 无MVP, 16场战斗涨1点好感')
+    c_1_1.add_argument('--刷好感战斗场数', default=default('--刷好感战斗场数'), help='例如: 32')
 
     # ==========7-2三战拣垃圾==========
     c_7_2_parser = subs.add_parser('7-2三战拣垃圾')
