@@ -1,19 +1,21 @@
 @echo off
+rem @SETLOCAL EnableExtensions EnableDelayedExpansion
 pushd %~dp0
-title ALAS run
+set ver=2.7
+title ALAS RUNNER %ver%
 :: -----------------------------------------------------------------------------
-:check_Permissions
-    echo Administrative permissions required. Detecting permissions...
-    net session >nul 2>&1
-    if %errorLevel% == 0 (
-        echo Success: Administrative permissions confirmed.
-        echo Press any to continue...
-        pause >nul
-        call :continue
-    ) else (
-        echo Failure: Current permissions inadequate.
-    )
-    pause >nul
+rem :check_Permissions
+rem     echo Administrative permissions required. Detecting permissions...
+rem     net session >nul 2>&1
+rem     if %errorLevel% == 0 (
+rem         echo Success: Administrative permissions confirmed.
+rem         echo Press any to continue...
+rem         pause >nul
+rem         call :continue
+rem     ) else (
+rem         echo Failure: Current permissions inadequate.
+rem     )
+rem     pause >nul
 :: -----------------------------------------------------------------------------
 :continue
 set ALAS_PATH=%~dp0
@@ -61,32 +63,50 @@ for /f "delims=" %%a in (!config!) do (
 )
 :: -----------------------------------------------------------------------------
 :bypass_first_run
-%CURL% -s https://api.github.com/repos/lmeszinc/AzurLaneAutoScript/git/refs/heads/master?access_token=!github_token! > %~dp0log\api_git.json
+rem %CURL% -s https://api.github.com/repos/lmeszinc/AzurLaneAutoScript/git/refs/heads/master?access_token=!github_token! > %~dp0log\api_git.json
+%CURL% -s https://api.github.com/repos/lmeszinc/AzurLaneAutoScript/commits/master?access_token=!github_token! > %~dp0log\api_git.json
 endlocal
-for /f "skip=5 tokens=2 delims=:," %%I IN (%API_JSON%) DO IF NOT DEFINED sha SET sha=%%I 
+rem for /f "skip=5 tokens=2 delims=:," %%I IN (%API_JSON%) DO IF NOT DEFINED sha SET sha=%%I 
+rem set sha=%sha:"=%
+rem set sha=%sha: =%
+for /f "skip=1 tokens=2 delims=:," %%I IN (%API_JSON%) DO IF NOT DEFINED sha SET sha=%%I 
 set sha=%sha:"=%
 set sha=%sha: =%
+for /f "skip=14 tokens=3 delims=:" %%I IN (%API_JSON%) DO IF NOT DEFINED message SET message=%%I 
+set message=%message:"=%
+set message=%message:,=%
+for /f %%i in ('git rev-parse --abbrev-ref HEAD') do set BRANCH=%%i
 for /f "delims=" %%i IN ('%GIT% log -1 "--pretty=%%H"') DO set LAST_LOCAL_GIT=%%i
-
 for /f "tokens=1,2" %%A in ('%GIT% log -1 "--format=%%h %%ct" -- .') do (
     set GIT_SHA1=%%A
     call :gmTime GIT_CTIME %%B
 )
 :: -----------------------------------------------------------------------------
 :time_parsed
-if %LAST_LOCAL_GIT% equ %sha% (
-    echo Remote Git hash:    %sha%
-    echo Local Git hash:     %LAST_LOCAL_GIT%
-    echo Local commit date:  %GIT_CTIME%
+if %LAST_LOCAL_GIT% == %sha% (
+    echo ----------------------------------------------------------------
+    echo Remote Git hash:        %sha%
+    echo Remote Git message:    %message%
+    echo ----------------------------------------------------------------
+    echo Local Git hash:       %LAST_LOCAL_GIT%
+    echo Local commit date:    %GIT_CTIME%
+    echo Local Branch:         %BRANCH%
+    echo ----------------------------------------------------------------
     echo your ALAS is updated
-    timeout /t 2
+    echo Press any to continue...
+    pause > NUL
     call :adb_kill
 ) else (
-    echo Remote Git hash:    %sha%
-    echo Local Git hash:     %LAST_LOCAL_GIT%
-    echo Local commit date:  %GIT_CTIME%
-    call popup.exe
-    choice /t 10 /c yn /d n /m "There is an update for ALAS. Download now?"
+    echo ----------------------------------------------------------------
+    echo Remote Git hash:        %sha%
+    echo Remote Git message:    %message%
+    echo ----------------------------------------------------------------
+    echo Local Git hash:       %LAST_LOCAL_GIT%
+    echo Local commit date:    %GIT_CTIME%
+    echo Local Branch:         %BRANCH%
+    echo ----------------------------------------------------------------
+    popup.exe
+    choice /t 10 /c yn /d y /m "There is an update for ALAS. Download now?"
     if errorlevel 2 call :adb_kill
     if errorlevel 1 call :choose_update_mode
 )
@@ -111,7 +131,7 @@ if not exist %SCREENSHOT_FOLDER% (
     mkdir %SCREENSHOT_FOLDER%
 )
 :: -----------------------------------------------------------------------------
-::if config\adb_port.ini dont exist, will be created
+:: if config\adb_port.ini dont exist, will be created
     if not exist %ADB_P% (
     cd . > %ADB_P%
         )
@@ -154,7 +174,9 @@ call :CHECK_BST_BETA
 :CHECK_BST_BETA
 reg query HKEY_LOCAL_MACHINE\SOFTWARE\BlueStacks_bgp64_hyperv >nul
 if %errorlevel% equ 0 (
+    echo ------------------------------------------------------------------------------------------
     choice /t 10 /c yn /d n /m "Bluestacks Hyper-V BETA detected, would you like to use realtime_connection mode?"
+    echo ------------------------------------------------------------------------------------------
     if errorlevel 2 call :load
     if errorlevel 1 call :realtime_connection
 ) else (
@@ -165,8 +187,10 @@ if %errorlevel% equ 0 (
 ECHO. Connecting with realtime mode ...
 for /f "tokens=3" %%a in ('reg query HKEY_LOCAL_MACHINE\SOFTWARE\BlueStacks_bgp64_hyperv\Guests\Android\Config /v BstAdbPort') do (set /a port = %%a)
 set SERIAL_REALTIME=127.0.0.1:%port%
+echo ----------------------------------------------------------------
 echo connecting at %SERIAL_REALTIME%
 call %ADB% connect %SERIAL_REALTIME%
+echo ----------------------------------------------------------------
 call :replace_serial
 :: -----------------------------------------------------------------------------
 :replace_serial
@@ -180,9 +204,12 @@ for /f "delims=" %%i in (!config!) do (
 )
 set search=%serial%
 set replace=%SERIAL_REALTIME%
+echo ----------------------------------------------------------------
 echo Old Serial:      %serial%
 echo New Serial:      %SERIAL_REALTIME% 
-timeout /t 2
+echo ----------------------------------------------------------------
+echo Press any to continue...
+pause > NUL
 for /f "delims=" %%i in ('type "%config%" ^& break ^> "%config%" ') do (
     set line=%%i
     >>"%config%" echo(!line:%search%=%replace%!
@@ -225,13 +252,17 @@ for /f "delims=" %%i in (!config!) do (
 call :load_alas_serial
 :: -----------------------------------------------------------------------------
 :load_input_serial
+echo ----------------------------------------------------------------
 echo connecting at %adb_input%
 call %ADB% connect %adb_input%
+echo ----------------------------------------------------------------
 call :init
 :: -----------------------------------------------------------------------------
 :load_alas_serial
+echo ----------------------------------------------------------------
 echo connecting at !serial!
 call !ADB! connect !serial!
+echo ----------------------------------------------------------------
 call :init
 :: -----------------------------------------------------------------------------
 endlocal
@@ -244,9 +275,12 @@ REM echo connecting at %ADB_PORT%
 REM call %ADB% connect %ADB_PORT%
 :: -----------------------------------------------------------------------------
 :init
+echo ----------------------------------------------------------------
 echo initializing uiautomator2
 call %PYTHON% -m uiautomator2 init
-REM timeout /t 1
+echo ----------------------------------------------------------------
+echo Press any to continue...
+pause > NUL
 :: uncomment the pause to catch errors
 REM pause
 call :alas
@@ -267,12 +301,13 @@ call :alas
     echo  :: Type a 'number' and press ENTER
     echo  :: Type 'exit' to quit
     echo.
-    set /P menu=
+    set /P menu= || Set menu=Nothing
         if %menu%==1 call :en
         if %menu%==2 call :cn
         if %menu%==3 call :jp
         if %menu%==4 call :choose_update_mode
         if %menu%==exit call :EOF
+        if %menu%==Nothing call :alas
         else (
         cls
     echo.
@@ -288,10 +323,11 @@ call :alas
 :en
     call %PYTHON% --version >nul
     if %errorlevel% == 0 (
+    echo ----------------------------------------------------------------
     echo Python Found in %PYTHON% Proceeding..
     echo Opening alas_en.pyw in %ALAS_PATH%
     call %PYTHON% alas_en.pyw
-    pause
+    pause > NUL
     call :alas
     ) else (
         echo :: it was not possible to open alas_en.pyw, make sure you have a folder toolkit
@@ -306,9 +342,11 @@ call :alas
 :cn
     call %PYTHON% --version >nul
     if %errorlevel% == 0 (
+    echo ----------------------------------------------------------------
     echo Python Found in %PYTHON% Proceeding..
     echo Opening alas_en.pyw in %ALAS_PATH%
     call %PYTHON% alas_cn.pyw
+    pause > NUL
     call :alas
     ) else (
         echo :: it was not possible to open alas_cn.pyw, make sure you have a folder toolkit
@@ -323,9 +361,11 @@ call :alas
 :jp
     call %PYTHON% --version >nul
     if %errorlevel% == 0 (
+    echo ----------------------------------------------------------------
     echo Python Found in %PYTHON% Proceeding..
     echo Opening alas_en.pyw in %ALAS_PATH%
     call %PYTHON% alas_jp.pyw
+    pause > NUL
     call :alas
     ) else (
         echo :: it was not possible to open alas_jp.pyw, make sure you have a folder toolkit
@@ -791,10 +831,6 @@ rem set sha=%sha:"=%
 rem set sha=%sha: =%
 rem FOR /F "delims=" %%i IN ('%GIT% log -1 "--pretty=%%H"') DO set LAST_LOCAL_GIT=%%i
 :: -----------------------------------------------------------------------------
-rem echo %sha%
-rem echo %LAST_LOCAL_GIT%
-rem echo Parse Ok
-rem pause
 :: -----------------------------------------------------------------------------
 rem if %LAST_LOCAL_GIT% equ %sha% SET run_update=1
 rem call :alas
