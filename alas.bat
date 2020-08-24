@@ -2,22 +2,43 @@
 :: Alas Run Tool v3
 :: Author: whoamikyo (https://kyo.ninja)
 :: Version: 3.0
-:: Last updated: 2020-08-22
+:: Last updated: 2020-08-23
 :: >>> Get updated from: https://github.com/LmeSzinc/AzurLaneAutoScript <<<
 @echo off
+chcp | find "932" >NUL && set "IME=true" || set "IME=false"
+if "%IME%"=="true" (
+   echo ====================================================================================================
+   echo Incorrect encoding, visit this link to correct: https://bit.ly/34t8ubY
+   start https://bit.ly/34t8ubY
+   echo To copy, select the link and CTRL+SHFT+C
+   echo ====================================================================================================
+   pause
+   goto :eof
+   )
 pushd "%~dp0"
 setlocal EnableDelayedExpansion
-set "Version=3.0"
-set "lastUpdated=2020-08-22"
+set "Version=3.0" 
+set "lastUpdated=2020-08-23" 
 :: Remote repo
-set "Remoterepo=https://raw.githubusercontent.com/LmeSzinc/AzurLaneAutoScript/master/toolkit"
+set "Remoterepo=https://raw.githubusercontent.com/LmeSzinc/AzurLaneAutoScript/master/toolkit" 
 
 rem ================= Preparation =================
 
 :: Set the root directory
-set "root=%~dp0"
+set "root=%~dp0" 
 set "root=%root:~0,-1%"
 cd "%root%"
+
+rem ================= Variables =================
+
+set "pyBin=%root%\toolkit\python.exe"
+set "adbBin=%root%\toolkit\Lib\site-packages\adbutils\binaries\adb.exe"
+set "gitBin=%root%\toolkit\Git\mingw64\bin\git.exe"
+set "curlBin=%root%\toolkit\Git\mingw64\bin\curl.exe"
+set "api_json=%root%\config\api_git.json"
+set "AlasConfig=%root%\config\alas.ini"
+set "template=%root%\config\template.ini"
+set "gitFolder=%root%\.git"
 
 :: Import main settings (%Language%, %Region%, %SystemType%) and translation text.
 call command\Get.bat Main
@@ -31,17 +52,9 @@ rem call command\Get.bat InfoOpt4
 call command\Get.bat DeployMode
 
 :: Start of Deployment
-title Alas Run Tool V3
-set "pyBin=%root%\toolkit\python.exe"
-set "adbBin=%root%\toolkit\Lib\site-packages\adbutils\binaries\adb.exe"
-set "gitBin=%root%\toolkit\Git\mingw64\bin\git.exe"
-set "curlBin=%root%\toolkit\Git\mingw64\bin\curl.exe"
-set "api_json=%root%\config\api_git.json"
-set "AlasConfig=%root%\config\alas.ini"
-set "template=%root%\config\template.ini"
-set "gitFolder=%root%\.git"
 if "%IsUsingGit%"=="yes" if "%DeployMode%"=="unknown" ( xcopy /Y toolkit\config .git\ > NUL )
 call :UpdateChecker_Alas
+title Alas Run Tool V3 == Branch: %BRANCH% == Git hash: %LAST_LOCAL_GIT% == commit date: %GIT_CTIME%
 
 rem ================= Menu =================
 
@@ -53,10 +66,10 @@ rem echo Language: %Language% & echo Region: %Region% & echo SystemType: %System
 rem echo http_proxy: %http_proxy% & echo https_proxy: %https_proxy%
 echo DeployMode: %DeployMode%
 rem echo KeepLocalChanges: %KeepLocalChanges%
-rem echo RealtimeMode: %RealtimeMode%
-rem echo FirstRun: %FirstRun%
+echo RealtimeMode: %RealtimeMode%
+echo FirstRun: %FirstRun%
 rem echo IsUsingGit: %IsUsingGit%
-rem echo Serial: %Serial%
+echo Serial: %Serial%
 setLocal EnableDelayedExpansion
 set "STR=Alas Run Tool %Version%^"
 set "SIZE=100"
@@ -102,9 +115,9 @@ goto MENU
 rem ================= OPTION 1 =================
 
 :en
+call :ExitIfNotPython
 call :CheckBsBeta
 call :AdbConnect
-rem call :uiautomator2init
 echo ====================================================================================================
 echo Python Found in %pyBin% Proceeding..
 echo Opening alas_en.pyw in %root%
@@ -116,9 +129,9 @@ goto :MENU
 rem ================= OPTION 2 =================
 
 :cn
+call :ExitIfNotPython
 call :CheckBsBeta
 call :AdbConnect
-rem call :uiautomator2init
 echo ====================================================================================================
 echo Python Found in %pyBin% Proceeding..
 echo Opening alas_en.pyw in %root%
@@ -129,9 +142,9 @@ goto :MENU
 
 rem ================= OPTION 3 =================
 :jp
+call :ExitIfNotPython
 call :CheckBsBeta
 call :AdbConnect
-rem call :uiautomator2init
 echo ====================================================================================================
 echo Python Found in %pyBin% Proceeding..
 echo Opening alas_en.pyw in %root%
@@ -150,7 +163,7 @@ set "LEN=0"
 :strLen_Loop
    if not "!!STR:~%LEN%!!"=="" set /A "LEN+=1" & goto :strLen_Loop
 set "equal====================================================================================================="
-set "spaces====================================================================================================="
+set "spaces=====================================================================================================" 
 call echo %%equal:~0,%SIZE%%%
 set /a "pref_len=%SIZE%-%LEN%-2"
 set /a "pref_len/=2"
@@ -247,13 +260,13 @@ rem ================= OPTION 5 =================
 :Setting
 cls
 setLocal EnableDelayedExpansion
-set "STR2=Advanced Settings^!"
+set "STR2=Advanced Settings^!" 
 set "SIZE=100"
 set "LEN=0"
 :strLen_Loop
    if not "!!STR2:~%LEN%!!"=="" set /A "LEN+=1" & goto :strLen_Loop
-set "equal====================================================================================================="
-set "spaces====================================================================================================="
+set "equal=====================================================================================================" 
+set "spaces=====================================================================================================" 
 call echo %%equal:~0,%SIZE%%%
 set /a "pref_len=%SIZE%-%LEN%-2"
 set /a "pref_len/=2"
@@ -266,11 +279,12 @@ echo. & echo  [0] Return to the Main Menu
 echo. & echo  [1] Select Download Region
 echo. & echo  [2] Set Global Proxy
 echo. & echo  [3] Set SERIAL (For ADB connect)
-echo. & echo  [4] (Disable/Enable) Network connection test while updating
-echo. & echo  [5] (Disable/Enable) Realtime Connection Mode (Only Bluestacks Beta)
-echo. & echo  [6] (Disable/Enable) Keep local changes
-echo. & echo  [7] Change default Branch to update (master/dev)
-echo. & echo  [8] Reset Settings
+echo. & echo  [4] (Disable/Enable) Realtime Connection Mode (Only Bluestacks Beta)
+echo. & echo  [5] (Disable/Enable) Keep local changes
+echo. & echo  [6] Change default Branch to update (master/dev)
+echo. & echo  [7] (Disable/Enable) Kill ADB server at each start
+echo. & echo  [8] Why can't I toggle certain settings above?
+echo. & echo  [9] Reset Settings
 echo. & echo.
 echo ====================================================================================================
 set opt2_choice=-1
@@ -280,11 +294,12 @@ if "%opt2_choice%"=="0" goto MENU
 if "%opt2_choice%"=="1" goto Region_setting
 if "%opt2_choice%"=="2" goto Proxy_setting
 if "%opt2_choice%"=="3" goto Serial_setting
-if "%opt2_choice%"=="4" goto NetworkTest_setting
-if "%opt2_choice%"=="5" goto Realtime_mode
-if "%opt2_choice%"=="6" goto Keep_local_changes
-if "%opt2_choice%"=="7" goto Branch_setting
+if "%opt2_choice%"=="4" goto Realtime_mode
+if "%opt2_choice%"=="5" goto Keep_local_changes
+if "%opt2_choice%"=="6" goto Branch_setting
+if "%opt2_choice%"=="7" goto settings_KilADBserver
 if "%opt2_choice%"=="8" goto Reset_setting
+if "%opt2_choice%"=="9" goto Reset_setting
 echo Please input a valid option.
 goto ReturnToSetting
 
@@ -315,7 +330,7 @@ echo.
 setlocal EnableDelayedExpansion
 if /i "%opt6_op5_choice%"=="Y" (
    set /p opt6_op5_choice= Please input - SERIAL ^(DEFAULT 127.0.0.1:5555 ^): 
-   if "!opt6_op5_choice!"=="" ( set "opt6_op5_choice=127.0.0.1:5555" )
+   if "!opt6_op5_choice!"=="" ( set "opt6_op5_choice=127.0.0.1:5555" ) 
    call command\Config.bat Serial !opt6_op5_choice!
    echo.
    echo The serial was set successfully.
@@ -347,6 +362,10 @@ goto ReturnToSetting
 call command\Config.bat KeepLocalChanges
 goto ReturnToSetting
 
+:settings_KilADBserver
+call command\Config.bat AdbKillServer
+goto ReturnToSetting
+
 :Proxy_setting
 call command\Get.bat Proxy
 if "%state_globalProxy%"=="enable" (
@@ -375,9 +394,9 @@ if /i "%opt6_opt3_choice%"=="T" (
    set /p opt6_opt3_proxyHost= Please input - Proxy Host ^(DEFAULT http://127.0.0.1 ^): 
    set /p opt6_opt3_httpPort= Please input - Http Port ^(DEFAULT 1080 ^): 
    set /p opt6_opt3_httpsPort= Please input - Https Port ^(DEFAULT 1080 ^): 
-   if "!opt6_opt3_proxyHost!"=="" ( set "opt6_opt3_proxyHost=http://127.0.0.1" )
-   if "!opt6_opt3_httpPort!"=="" ( set "opt6_opt3_httpPort=1080" )
-   if "!opt6_opt3_httpsPort!"=="" ( set "opt6_opt3_httpsPort=1080" )
+   if "!opt6_opt3_proxyHost!"=="" ( set "opt6_opt3_proxyHost=http://127.0.0.1" ) 
+   if "!opt6_opt3_httpPort!"=="" ( set "opt6_opt3_httpPort=1080" ) 
+   if "!opt6_opt3_httpsPort!"=="" ( set "opt6_opt3_httpsPort=1080" ) 
    call command\Config.bat ProxyHost !opt6_opt3_proxyHost!
    call command\Config.bat HttpPort !opt6_opt3_httpPort!
    call command\Config.bat HttpsPort !opt6_opt3_httpsPort!
@@ -413,15 +432,12 @@ if /i "%opt6_opt6_choice%"=="Y" (
 ) else ( echo Invalid input. Cancelled. )
 goto ReturnToSetting
 
-:NetworkTest_setting
-call command\Config.bat NetTest
-goto ReturnToSetting
-
-:Upgrade_setting
-call command\Config.bat UpgradeOnlyViaGitHub
-goto ReturnToSetting
-
 rem ================= FUNCTIONS =================
+
+:CheckAdbConnect
+for /f "tokens=1*" %%g IN ('%adbBin% connect 127.0.0.1:5555') do set adbCheck=%%g
+if "%adbCheck%"=="cannot"
+echo %adbCheck%
 
 :ReturnToSetting
 echo. & echo Press any key to continue...
@@ -446,6 +462,13 @@ if exist .git\ (
 )
 goto :eof
 
+:ExitIfNotPython
+if NOT exist toolkit\python.exe (
+   echo. & echo The Initial Deployment was not done correctly. Please delete entire folder and reinstall from scratch.
+   start https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Installation_en
+   call :PleaseRerun
+)
+
 :CheckBsBeta
 if "%RealtimeMode%"=="disable" goto :eof
 rem if "%FirstRun%"=="enable" goto :eof
@@ -454,6 +477,7 @@ for /f "tokens=3" %%a in ('reg query HKEY_LOCAL_MACHINE\SOFTWARE\BlueStacks_bgp6
 set SerialRealtime=127.0.0.1:%port%
 echo ====================================================================================================
 echo connecting at %SerialRealtime%
+if "%KillServer%"=="enable" ( %adbBin% kill-server > nul 2>&1 )
 %adbBin% connect %SerialRealtime%
 echo ====================================================================================================
 if "%FirstRun%"=="yes" (
@@ -466,19 +490,22 @@ echo Old Serial:      %SerialAlas%
 echo New Serial:      %SerialRealtime% 
 echo ====================================================================================================
 echo Press any to continue...
-pause > NUL
+%pyBin% -m uiautomator2 init
 :: -----------------------------------------------------------------------------
 goto :eof
 
 :AdbConnect
 if "%RealtimeMode%"=="enable" goto :eof
-if "%FirstRun%"=="yes" ( %adbBin% connect %serial_input% && goto :eof )
-%adbBin% connect %Serial%
-goto :eof
-
-:KillAdb
-if "%RealtimeMode%"=="enable" goto :eof
-%adbBin% kill-server > nul 2>&1
+if "%FirstRun%"=="yes" ( goto :eof )
+if "%KillServer%"=="enable" ( %adbBin% kill-server > nul 2>&1 )
+%adbBin% connect %Serial% | find /i "connected to" >nul
+if errorlevel 1 (
+   echo The connection was not successful on SERIAL: %Serial%
+   goto Serial_setting
+   ) else (
+      %pyBin% -m uiautomator2 init
+      echo The connection was Successful on SERIAL: %Serial%
+   )
 goto :eof
 
 :uiautomator2init

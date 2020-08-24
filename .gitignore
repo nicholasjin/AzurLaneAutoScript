@@ -246,5 +246,10 @@ adb_port.ini
 *.zip
 =======
 !popup.exe
+<<<<<<< HEAD
 *.zip
 >>>>>>> 3790589c75017704a91c2301d149113592a5dfcd
+=======
+*.zip
+console.bat
+>>>>>>> 617623b2807964a37a71cd6b133aab5d12b1f049

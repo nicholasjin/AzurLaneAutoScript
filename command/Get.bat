@@ -11,9 +11,9 @@
 call :Import_%~1
 goto :eof
 
-
 rem ================= FUNCTIONS =================
 
+:Import_Deploy
 
 :: %cd%: "%root%"
 :: Get %Language% , %Region% , %SystemType%
@@ -39,6 +39,7 @@ if exist config\deploy.ini (
     for /f "tokens=3 delims= " %%i in ('findstr /i "Branch" config\deploy.ini') do ( set "Branch=%%i" )
     for /f "tokens=3 delims= " %%i in ('findstr /i "AdbConnect" config\deploy.ini') do ( set "AdbConnect=%%i" )
     for /f "tokens=3 delims= " %%i in ('findstr /i "Serial" config\deploy.ini') do ( set "Serial=%%i" )
+    for /f "tokens=3 delims= " %%i in ('findstr /i "AdbKillServer" config\deploy.ini') do ( set "KillServer=%%i" )
 ) else (
     call command\LanguageSet.bat
     )
@@ -67,18 +68,24 @@ echo If you misstype, you can set in Settings menu Option 3
 echo =========================================================================
 set /p serial_input=Please input - SERIAL ^(DEFAULT 127.0.0.1:5555 ^): 
 if "%serial_input%"=="" ( set "serial_input=127.0.0.1:5555" )
-call command\Config.bat Serial %serial_input%
-call command\ConfigTemplate.bat SerialTemplate %serial_input%
-
+%adbBin% kill-server > nul 2>&1
+%adbBin% connect %serial_input% | find /i "connected to" >nul
+if errorlevel 1 (
+    echo The connection was not successful on SERIAL: %Serial%
+    goto Import_Serial
+) else (
+    call command\Config.bat Serial %serial_input%
+    call command\ConfigTemplate.bat SerialTemplate %serial_input%
+    %pyBin% -m uiautomator2 init
+    echo The connection was Successful on SERIAL: %Serial%
+)
 echo =========================================================================
 echo Old Serial:      %Serial%
 echo New Serial:      %serial_input% 
 echo =========================================================================
 echo Press any to continue...
 pause > NUL
-
 goto :eof
-
 
 :: %cd%: "%root%"
 :: Get the proxy settings of CMD from "config\deploy.ini"
