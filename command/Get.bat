@@ -62,16 +62,20 @@ goto :eof
 
 :Import_Serial
 if "%FirstRun%"=="no" goto :eof
-echo =========================================================================
+echo ====================================================================================================
 echo Enter your HOST:PORT eg: 127.0.0.1:5555
 echo If you misstype, you can set in Settings menu Option 3
-echo =========================================================================
+echo ====================================================================================================
 set /p serial_input=Please input - SERIAL ^(DEFAULT 127.0.0.1:5555 ^): 
 if "%serial_input%"=="" ( set "serial_input=127.0.0.1:5555" )
 %adbBin% kill-server > nul 2>&1
 %adbBin% connect %serial_input% | find /i "connected to" >nul
+echo ====================================================================================================
 if errorlevel 1 (
     echo The connection was not successful on SERIAL: %Serial%
+    echo Check our wiki for more info
+    pause > NUL
+    start https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Installation_en
     goto Import_Serial
 ) else (
     call command\Config.bat Serial %serial_input%
@@ -79,13 +83,14 @@ if errorlevel 1 (
     %pyBin% -m uiautomator2 init
     echo The connection was Successful on SERIAL: %Serial%
 )
-echo =========================================================================
+echo ====================================================================================================
 echo Old Serial:      %Serial%
 echo New Serial:      %serial_input% 
-echo =========================================================================
+echo ====================================================================================================
 echo Press any to continue...
 pause > NUL
 goto :eof
+
 
 :: %cd%: "%root%"
 :: Get the proxy settings of CMD from "config\deploy.ini"
@@ -98,24 +103,15 @@ if exist config\deploy.ini (
 ) else ( set "state_globalProxy=disable" )
 goto :eof
 
-:: %cd%: "toolkit\"
-:: Get %DeployMode% from "toolkit\deploy.log"
+:: Get %DeployMode% from "deploy.log"
 :Import_DeployMode
 if exist deploy.log (
     for /f "tokens=2 delims= " %%i in ('findstr /i "DeployMode" deploy.log') do ( set "DeployMode=%%i" )
 ) else ( set "DeployMode=unknown" )
 goto :eof
 
-:: %cd%: "toolkit\"
-:: Get default options for 'wget.exe' from "toolkit\wget.ini" -> %WgetOptions%
-:Import_WgetOptions
-if exist wget.ini (
-    for /f "eol=# delims=" %%i in (wget.ini) do ( set "WgetOptions=%%i" && goto :eof )
-) else ( set "WgetOptions=-q --show-progtoolkits --progtoolkits=bar:force:noscroll --no-check-certificate -nc" )
-goto :eof
-
 :: %cd%: "%root%"
-:: Get %opt3_info% according to "toolkit\deploy.log"
+:: Get %opt3_info% according to "deploy.log"
 :Import_InfoOpt3
 set "opt3_info="
 if exist deploy.log (
@@ -127,7 +123,6 @@ goto :eof
 
 :: %cd%: "%root%"
 :: Get %opt4_info% according to "Console.bat"
-:: call "command\lang_*.bat" before calling this function.
 :Import_InfoOpt4
 set "opt4_info="
 if exist console.bat (

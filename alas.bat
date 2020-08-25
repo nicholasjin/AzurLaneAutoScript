@@ -3,7 +3,7 @@
 :: Author: whoamikyo (https://kyo.ninja)
 :: Version: 3.0
 :: Last updated: 2020-08-23
-:: >>> Get updated from: https://github.com/LmeSzinc/AzurLaneAutoScript <<<
+:: https://github.com/LmeSzinc/AzurLaneAutoScript
 @echo off
 chcp | find "932" >NUL && set "IME=true" || set "IME=false"
 if "%IME%"=="true" (
@@ -40,7 +40,7 @@ set "AlasConfig=%root%\config\alas.ini"
 set "template=%root%\config\template.ini"
 set "gitFolder=%root%\.git"
 
-:: Import main settings (%Language%, %Region%, %SystemType%) and translation text.
+:: Import main settings (%Language%, %Region%, %SystemType%).
 call command\Get.bat Main
 :: Import the Proxy setting and apply. Then show more info in Option6.
 call command\Get.bat Serial
@@ -66,9 +66,9 @@ rem echo Language: %Language% & echo Region: %Region% & echo SystemType: %System
 rem echo http_proxy: %http_proxy% & echo https_proxy: %https_proxy%
 echo DeployMode: %DeployMode%
 rem echo KeepLocalChanges: %KeepLocalChanges%
-echo RealtimeMode: %RealtimeMode%
-echo FirstRun: %FirstRun%
-rem echo IsUsingGit: %IsUsingGit%
+rem echo RealtimeMode: %RealtimeMode%
+rem echo FirstRun: %FirstRun%
+echo IsUsingGit: %IsUsingGit%
 echo Serial: %Serial%
 setLocal EnableDelayedExpansion
 set "STR=Alas Run Tool %Version%^"
@@ -102,7 +102,7 @@ echo. & echo  [5] Settings
 echo ====================================================================================================
 set choice=0
 set /p choice= Please input the option and press ENTER:
-echo. & echo.
+echo ====================================================================================================
 if "%choice%"=="1" goto en
 if "%choice%"=="2" goto cn
 if "%choice%"=="3" goto jp
@@ -115,9 +115,9 @@ goto MENU
 rem ================= OPTION 1 =================
 
 :en
-call :ExitIfNotPython
+call command\ConfigAlas.bat AzurLanePackage com.YoStarEN.AzurLane
 call :CheckBsBeta
-call :AdbConnect
+:continue_en
 echo ====================================================================================================
 echo Python Found in %pyBin% Proceeding..
 echo Opening alas_en.pyw in %root%
@@ -129,9 +129,7 @@ goto :MENU
 rem ================= OPTION 2 =================
 
 :cn
-call :ExitIfNotPython
 call :CheckBsBeta
-call :AdbConnect
 echo ====================================================================================================
 echo Python Found in %pyBin% Proceeding..
 echo Opening alas_en.pyw in %root%
@@ -142,9 +140,7 @@ goto :MENU
 
 rem ================= OPTION 3 =================
 :jp
-call :ExitIfNotPython
 call :CheckBsBeta
-call :AdbConnect
 echo ====================================================================================================
 echo Python Found in %pyBin% Proceeding..
 echo Opening alas_en.pyw in %root%
@@ -190,7 +186,7 @@ echo. & echo  [0] Return to the Main Menu
 echo ====================================================================================================
 set choice=-1
 set /p choice= Please input the option and press ENTER:
-echo. & echo.
+echo ====================================================================================================
 if "%choice%"=="1" goto Run_UpdateAlas
 if "%choice%"=="2" goto update_toolkit
 if "%choice%"=="3" goto Setting
@@ -260,7 +256,7 @@ rem ================= OPTION 5 =================
 :Setting
 cls
 setLocal EnableDelayedExpansion
-set "STR2=Advanced Settings^!" 
+set "STR2=Advanced Settings=" 
 set "SIZE=100"
 set "LEN=0"
 :strLen_Loop
@@ -274,6 +270,9 @@ set /a "suf_len=%SIZE%-%LEN%-2-%pref_len%"
 call echo =%%spaces:~0,%pref_len%%%%%STR2%%%%spaces:~0,%suf_len%%%=
 call echo %%equal:~0,%SIZE%%%
 endLocal
+echo ====================================================================================================
+echo == Please re-run this batch to make any settings take effect
+echo ====================================================================================================
 echo.
 echo. & echo  [0] Return to the Main Menu
 echo. & echo  [1] Select Download Region
@@ -317,12 +316,13 @@ if /i "%opt3_opt10_choice%"=="Y" (
    del /Q config\deploy.ini >NUL 2>NUL
    echo The "config\deploy.ini" has been deleted, please try changing the settings again.
 ) else ( echo Invalid input. Cancelled. )
-goto PleaseRerun
+goto ReturnToSetting
 
 :Serial_setting
-echo. & echo.
-echo If AdbConnect is enable, the Serial of current CMD window will be:
-echo     Current Serial = %Serial%
+echo ====================================================================================================
+echo If you dont know what are doing, check our wiki first https://github.com/LmeSzinc/AzurLaneAutoScript/wiki:
+echo == Current Serial = %Serial%
+echo ====================================================================================================
 set opt6_op5_choice=0
 echo. & echo Would you like to change the current SERIAL?, please enter Y to proceed;
 set /p opt6_op5_choice= Press ENTER to cancel: 
@@ -349,7 +349,7 @@ echo Chinese users, it is recommended to switch to Gitee, Option [2]
 echo [1] Origin (Github) ; [2] CN mirror (Gitee)
 set opt3_choice=-1
 set /p opt3_choice= Please input the option and press ENTER:
-echo. & echo.
+echo ====================================================================================================
 if "%opt3_choice%"=="1" ( call command\Config.bat Region origin && goto PleaseRerun )
 if "%opt3_choice%"=="2" ( call command\Config.bat Region cn && goto PleaseRerun )
 goto ReturnToSetting
@@ -386,8 +386,8 @@ if /i "%opt6_opt3_choice%"=="T" (
    call command\Config.bat Proxy
 ) else if /i "%opt6_opt3_choice%"=="Y" (
    call command\Config.bat ProxyHost http://127.0.0.1
-   call command\Config.bat HttpPort 1080
-   call command\Config.bat HttpsPort 1080
+   call command\Config.bat Http 1080
+   call command\Config.bat Https 1080
    echo The Proxy Server has been reset to the default.
    call command\Config.bat Proxy enable
 ) else if /i "%opt6_opt3_choice%"=="N" (
@@ -398,8 +398,8 @@ if /i "%opt6_opt3_choice%"=="T" (
    if "!opt6_opt3_httpPort!"=="" ( set "opt6_opt3_httpPort=1080" ) 
    if "!opt6_opt3_httpsPort!"=="" ( set "opt6_opt3_httpsPort=1080" ) 
    call command\Config.bat ProxyHost !opt6_opt3_proxyHost!
-   call command\Config.bat HttpPort !opt6_opt3_httpPort!
-   call command\Config.bat HttpsPort !opt6_opt3_httpsPort!
+   call command\Config.bat Http !opt6_opt3_httpPort!
+   call command\Config.bat Https !opt6_opt3_httpsPort!
    echo.
    call command\Config.bat Proxy enable
    echo The custom Proxy Server has been set successfully.
@@ -412,25 +412,6 @@ endlocal
 echo. & echo Please re-run this batch to make the settings take effect.
 echo Please re-run the "alas.bat" to make the settings take effect.
 goto PleaseRerun
-
-:Wget_setting
-echo The current options of 'wget' are:
-set "WgetOptions="
-cd toolkit && call command\Get.bat WgetOptions
-echo. & echo "%WgetOptions%"
-if NOT exist wget.ini ( call command\WgetOptionsGenerator.bat )
-cd ..
-echo. & echo Edit the "toolkit\wget.ini" manually to change the default options.
-echo Please re-perform this step here to confirm the modification.
-set opt6_opt6_choice=0
-echo. & echo To reset the default "wget.ini", please enter Y;
-set /p opt6_opt6_choice= Press ENTER to cancel: 
-echo.
-if /i "%opt6_opt6_choice%"=="Y" (
-   cd toolkit && call command\WgetOptionsGenerator.bat
-   cd .. && echo The "wget.ini" has been reset.
-) else ( echo Invalid input. Cancelled. )
-goto ReturnToSetting
 
 rem ================= FUNCTIONS =================
 
@@ -470,51 +451,52 @@ if NOT exist toolkit\python.exe (
 )
 
 :CheckBsBeta
-if "%RealtimeMode%"=="disable" goto :eof
-rem if "%FirstRun%"=="enable" goto :eof
-echo Connecting with realtime mode...
+if "%RealtimeMode%"=="disable" ( goto AdbConnect )
+if "%FirstRun%"=="yes" ( goto :eof )
+echo == Connecting with realtime mode...
 for /f "tokens=3" %%a in ('reg query HKEY_LOCAL_MACHINE\SOFTWARE\BlueStacks_bgp64_hyperv\Guests\Android\Config /v BstAdbPort') do (set /a port = %%a)
 set SerialRealtime=127.0.0.1:%port%
 echo ====================================================================================================
-echo connecting at %SerialRealtime%
-if "%KillServer%"=="enable" ( %adbBin% kill-server > nul 2>&1 )
+if "%KillServer%"=="enable" (
+   %adbBin% kill-server > nul 2>&1 
+   )
+echo == connecting at %SerialRealtime%
 %adbBin% connect %SerialRealtime%
 echo ====================================================================================================
 if "%FirstRun%"=="yes" (
+   call command\Config.bat Serial %SerialRealtime%
    call command\ConfigTemplate.bat SerialTemplate %SerialRealtime%
 ) else (
+   call command\Config.bat Serial %SerialRealtime%
    call command\ConfigAlas.bat SerialAlas %SerialRealtime%
 )
 echo ====================================================================================================
-echo Old Serial:      %SerialAlas%
-echo New Serial:      %SerialRealtime% 
+echo == Old Serial:      %SerialAlas%
+echo == New Serial:      %SerialRealtime%
 echo ====================================================================================================
-echo Press any to continue...
 %pyBin% -m uiautomator2 init
-:: -----------------------------------------------------------------------------
+echo ====================================================================================================
+echo == The connection was Successful on SERIAL: %SerialRealtime%
 goto :eof
+
 
 :AdbConnect
-if "%RealtimeMode%"=="enable" goto :eof
-if "%FirstRun%"=="yes" ( goto :eof )
+if "%FirstRun%"=="yes" goto :eof
 if "%KillServer%"=="enable" ( %adbBin% kill-server > nul 2>&1 )
 %adbBin% connect %Serial% | find /i "connected to" >nul
+echo ====================================================================================================
 if errorlevel 1 (
-   echo The connection was not successful on SERIAL: %Serial%
+   echo == The connection was not successful on SERIAL: %Serial%
+   echo == Check our wiki for more info
+   pause > NUL
+   start https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Installation_en
    goto Serial_setting
+   echo ====================================================================================================
    ) else (
       %pyBin% -m uiautomator2 init
-      echo The connection was Successful on SERIAL: %Serial%
+      echo ====================================================================================================
+      echo == The connection was Successful on SERIAL: %Serial%
    )
-goto :eof
-
-:uiautomator2init
-echo ====================================================================================================
-echo initializing uiautomator2
-%pyBin% -m uiautomator2 init
-echo ====================================================================================================
-echo Press any to continue...
-pause > NUL
 goto :eof
 
 :UpdateChecker_Alas
@@ -553,7 +535,8 @@ for /f "tokens=1,2" %%A in ('%gitBin% log -1 "--format=%%h %%ct" -- .') do (
 set GIT_SHA1=%%A
 call :gmTime GIT_CTIME %%B
 )
-:: -----------------------------------------------------------------------------
+
+
 :time_parsed
 if %LAST_LOCAL_GIT% == %sha% (
    echo ====================================================================================================
@@ -594,5 +577,9 @@ if %mi% lss 10 set mi=0%mi%
 if %s% lss 10 set s=0%s%
 endlocal & set %1=%y%-%m%-%d% %h%:%mi%:%s%
 goto :eof
+
+:END
+echo tesadasdadsa
+pause
 
 rem ================= End of File =================
