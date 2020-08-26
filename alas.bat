@@ -17,15 +17,15 @@ if "%IME%"=="true" (
    )
 pushd "%~dp0"
 setlocal EnableDelayedExpansion
-set "Version=3.0" 
-set "lastUpdated=2020-08-23" 
+set "Version=3.0"
+set "lastUpdated=2020-08-23"
 :: Remote repo
-set "Remoterepo=https://raw.githubusercontent.com/LmeSzinc/AzurLaneAutoScript/master/toolkit" 
+set "Remoterepo=https://raw.githubusercontent.com/LmeSzinc/AzurLaneAutoScript/master/toolkit"
 
 rem ================= Preparation =================
 
 :: Set the root directory
-set "root=%~dp0" 
+set "root=%~dp0"
 set "root=%root:~0,-1%"
 cd "%root%"
 
@@ -45,9 +45,9 @@ call command\Get.bat Main
 :: Import the Proxy setting and apply. Then show more info in Option6.
 call command\Get.bat Serial
 call command\Get.bat Proxy
-call command\Get.bat InfoOpt6
+call command\Get.bat InfoOpt1
 :: If already deployed, show more info in Option3.
-call command\Get.bat InfoOpt3
+call command\Get.bat InfoOpt2
 rem call command\Get.bat InfoOpt4
 call command\Get.bat DeployMode
 
@@ -82,7 +82,7 @@ call echo %%equal:~0,%SIZE%%%
 set /a "pref_len=%SIZE%-%LEN%-2"
 set /a "pref_len/=2"
 set /a "suf_len=%SIZE%-%LEN%-2-%pref_len%"
-call echo =%%spaces:~0,%pref_len%%%%%STR%%%%spaces:~0,%suf_len%%%=
+call echo %%spaces:~0,%pref_len%%%%%STR%%%%spaces:~0,%suf_len%%%===
 call echo %%equal:~0,%SIZE%%%
 endLocal
 echo.
@@ -159,7 +159,7 @@ set "LEN=0"
 :strLen_Loop
    if not "!!STR:~%LEN%!!"=="" set /A "LEN+=1" & goto :strLen_Loop
 set "equal====================================================================================================="
-set "spaces=====================================================================================================" 
+set "spaces====================================================================================================="
 call echo %%equal:~0,%SIZE%%%
 set /a "pref_len=%SIZE%-%LEN%-2"
 set /a "pref_len/=2"
@@ -207,7 +207,7 @@ set opt6_opt4_choice=0
 echo. & echo Change default Branch (master/dev), please enter T;
 echo To proceed update using Branch: %Branch%, please enter Y;
 echo Back to Updater menu, please enter N;
-set /p opt6_opt4_choice= Press ENTER to cancel: 
+set /p opt6_opt4_choice= Press ENTER to cancel:
 echo.
 if /i "%opt6_opt4_choice%"=="T" (
    call command\Config.bat Branch
@@ -256,13 +256,13 @@ rem ================= OPTION 5 =================
 :Setting
 cls
 setLocal EnableDelayedExpansion
-set "STR2=Advanced Settings=" 
+set "STR2=Advanced Settings="
 set "SIZE=100"
 set "LEN=0"
 :strLen_Loop
    if not "!!STR2:~%LEN%!!"=="" set /A "LEN+=1" & goto :strLen_Loop
-set "equal=====================================================================================================" 
-set "spaces=====================================================================================================" 
+set "equal====================================================================================================="
+set "spaces====================================================================================================="
 call echo %%equal:~0,%SIZE%%%
 set /a "pref_len=%SIZE%-%LEN%-2"
 set /a "pref_len/=2"
@@ -282,8 +282,9 @@ echo. & echo  [4] (Disable/Enable) Realtime Connection Mode (Only Bluestacks Bet
 echo. & echo  [5] (Disable/Enable) Keep local changes
 echo. & echo  [6] Change default Branch to update (master/dev)
 echo. & echo  [7] (Disable/Enable) Kill ADB server at each start
-echo. & echo  [8] Why can't I toggle certain settings above?
-echo. & echo  [9] Reset Settings
+echo. & echo  [8] Replace ADB from chinese emulators
+echo. & echo  [9] Why can't I toggle certain settings above?
+echo. & echo  [10] Reset Settings
 echo. & echo.
 echo ====================================================================================================
 set opt2_choice=-1
@@ -297,8 +298,9 @@ if "%opt2_choice%"=="4" goto Realtime_mode
 if "%opt2_choice%"=="5" goto Keep_local_changes
 if "%opt2_choice%"=="6" goto Branch_setting
 if "%opt2_choice%"=="7" goto settings_KilADBserver
-if "%opt2_choice%"=="8" goto Reset_setting
+if "%opt2_choice%"=="8" goto menu_ReplaceAdb
 if "%opt2_choice%"=="9" goto Reset_setting
+if "%opt2_choice%"=="10" goto Reset_setting
 echo Please input a valid option.
 goto ReturnToSetting
 
@@ -318,6 +320,126 @@ if /i "%opt3_opt10_choice%"=="Y" (
 ) else ( echo Invalid input. Cancelled. )
 goto ReturnToSetting
 
+:menu_ReplaceAdb
+cls
+echo ====================================================================================================
+echo ======== Different version of ADB will kill each other when starting.
+echo ==== Chinese emulators (NoxPlayer, LDPlayer, MemuPlayer, MuMuPlayer) use their own adb,
+echo == instead of the one in system PATH, so when they start they kill the adb.exe that Alas is using
+echo == so, you need replace the ADB in your emulator with the one Alas is using.
+echo ====================================================================================================
+echo.
+echo. & echo  [0] Return to the Main Menu
+echo. & echo  [1] Replace NoxPlayer ADB
+echo. & echo  [2] Replace LDplayer ADB
+echo. & echo  [3] Replace Memu ADB
+echo. & echo.
+echo ====================================================================================================
+set opt4_choice=-1
+set /p opt4_choice= Please input the index number of option and press ENTER:
+echo. & echo.
+if "%opt4_choice%"=="0" goto MENU
+if "%opt4_choice%"=="1" goto replace_nox
+if "%opt4_choice%"=="2" goto replace_ldplayer
+if "%opt4_choice%"=="3" goto replace_memu
+echo Please input a valid option.
+goto ReturnToSetting
+
+:replace_nox
+reg query HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\DuoDianOnline\SetupInfo >nul
+if %errorlevel% equ 0 (
+   echo ====================================================================================================
+   echo == NoxAppPlayer detected, Proceeding...
+) else (
+   echo ====================================================================================================
+   echo == NoxAppPlayer not detected
+   echo Press any key to back main menu
+   pause > NUL
+   goto ReturnToMenu
+)
+for /f "usebackq tokens=2,* skip=2" %%L in ( `reg query "HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\DuoDianOnline\SetupInfo" /v InstallPath`) do set InstallPath=%%M
+%adbBin% kill-server > nul 2>&1
+echo f | xcopy /Y "%InstallPath%\bin\adb.exe" "%InstallPath%\bin\adb.exe.bak" >nul
+echo f | xcopy /Y "%InstallPath%\bin\nox_adb.exe" "%InstallPath%\bin\nox_adb.exe.bak" >nul
+xcopy /Y toolkit\Lib\site-packages\adbutils\binaries\adb.exe "%InstallPath%\bin\" >nul
+echo f | xcopy /Y toolkit\Lib\site-packages\adbutils\binaries\adb.exe "%InstallPath%\bin\nox_adb.exe" >nul
+if %errorlevel% equ 0 (
+   echo ====================================================================================================
+   echo == Success
+   echo == Press any key to back main menu
+   pause > NUL
+   goto ReturnToMenu
+) else (
+   echo ====================================================================================================
+   echo == Error, you may not have permission to replace the file
+   echo == try run this batch as administrator
+   echo Press any key to back main menu
+   pause > NUL
+   goto ReturnToMenu
+)
+
+:replace_memu
+reg query HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\MEmu >nul
+if %errorlevel% equ 0 (
+   echo ====================================================================================================
+   echo == Memu detected, Proceeding...
+) else (
+   echo ====================================================================================================
+   echo == Memu not detected
+   echo Press any key to back main menu
+   pause > NUL
+   goto ReturnToMenu
+)
+for /f "usebackq tokens=2,* skip=2" %%L in ( `reg query "HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\MEmu" /v InstallLocation`) do set InstallLocation=%%M
+%adbBin% kill-server > nul 2>&1
+echo f | xcopy /Y "%InstallLocation%\MEmu\adb.exe" "%InstallLocation%\MEmu\adb.exe.bak" >nul
+xcopy /Y toolkit\Lib\site-packages\adbutils\binaries\adb.exe "%InstallLocation%\MEmu\" >nul
+if %errorlevel% equ 0 (
+   echo ====================================================================================================
+   echo == Success
+   echo == Press any key to back main menu
+   pause > NUL
+   goto ReturnToMenu
+) else (
+   echo ====================================================================================================
+   echo == Error, you may not have permission to replace the file
+   echo == try run this batch as administrator
+   echo Press any key to back main menu
+   pause > NUL
+   goto ReturnToMenu
+)
+
+:replace_ldplayer
+reg query HKEY_CURRENT_USER\SOFTWARE\XuanZhi\LDPlayer >nul
+if %errorlevel% equ 0 (
+   echo ====================================================================================================
+   echo == LDplayer detected, Proceeding...
+) else (
+   echo ====================================================================================================
+   echo == LDplayer not detected
+   echo Press any key to back main menu
+   pause > NUL
+   goto ReturnToMenu
+)
+FOR /F "usebackq tokens=2,* skip=2" %%L IN ( `reg query "HKEY_CURRENT_USER\SOFTWARE\XuanZhi\LDPlayer" /v InstallDir`) do set InstallDir=%%M
+%adbBin% kill-server > nul 2>&1
+echo f | xcopy /Y "%InstallDir%\adb.exe" "%InstallDir%\adb.exe.bak" >nul
+xcopy /Y toolkit\Lib\site-packages\adbutils\binaries\adb.exe "%InstallDir%\" >nul
+if %errorlevel% equ 0 (
+   echo ====================================================================================================
+   echo == Success
+   echo == Press any key to back main menu
+   pause > NUL
+   goto ReturnToMenu
+) else (
+   echo ====================================================================================================
+   echo == Error, you may not have permission to replace the file
+   echo == try run this batch as administrator
+   echo Press any key to back main menu
+   pause > NUL
+   goto ReturnToMenu
+)
+
 :Serial_setting
 echo ====================================================================================================
 echo If you dont know what are doing, check our wiki first https://github.com/LmeSzinc/AzurLaneAutoScript/wiki:
@@ -325,12 +447,12 @@ echo == Current Serial = %Serial%
 echo ====================================================================================================
 set opt6_op5_choice=0
 echo. & echo Would you like to change the current SERIAL?, please enter Y to proceed;
-set /p opt6_op5_choice= Press ENTER to cancel: 
+set /p opt6_op5_choice= Press ENTER to cancel:
 echo.
 setlocal EnableDelayedExpansion
 if /i "%opt6_op5_choice%"=="Y" (
-   set /p opt6_op5_choice= Please input - SERIAL ^(DEFAULT 127.0.0.1:5555 ^): 
-   if "!opt6_op5_choice!"=="" ( set "opt6_op5_choice=127.0.0.1:5555" ) 
+   set /p opt6_op5_choice= Please input - SERIAL ^(DEFAULT 127.0.0.1:5555 ^):
+   if "!opt6_op5_choice!"=="" ( set "opt6_op5_choice=127.0.0.1:5555" )
    call command\Config.bat Serial !opt6_op5_choice!
    echo.
    echo The serial was set successfully.
@@ -379,7 +501,7 @@ set opt6_opt3_choice=0
 echo. & echo To (disable/enable) the Global Proxy, please enter T;
 echo To reset to the default Proxy Server, please enter Y;
 echo To customize the Proxy Host or Port, please enter N;
-set /p opt6_opt3_choice= Press ENTER to cancel: 
+set /p opt6_opt3_choice= Press ENTER to cancel:
 echo.
 setlocal EnableDelayedExpansion
 if /i "%opt6_opt3_choice%"=="T" (
@@ -391,12 +513,12 @@ if /i "%opt6_opt3_choice%"=="T" (
    echo The Proxy Server has been reset to the default.
    call command\Config.bat Proxy enable
 ) else if /i "%opt6_opt3_choice%"=="N" (
-   set /p opt6_opt3_proxyHost= Please input - Proxy Host ^(DEFAULT http://127.0.0.1 ^): 
-   set /p opt6_opt3_httpPort= Please input - Http Port ^(DEFAULT 1080 ^): 
-   set /p opt6_opt3_httpsPort= Please input - Https Port ^(DEFAULT 1080 ^): 
-   if "!opt6_opt3_proxyHost!"=="" ( set "opt6_opt3_proxyHost=http://127.0.0.1" ) 
-   if "!opt6_opt3_httpPort!"=="" ( set "opt6_opt3_httpPort=1080" ) 
-   if "!opt6_opt3_httpsPort!"=="" ( set "opt6_opt3_httpsPort=1080" ) 
+   set /p opt6_opt3_proxyHost= Please input - Proxy Host ^(DEFAULT http://127.0.0.1 ^):
+   set /p opt6_opt3_httpPort= Please input - Http Port ^(DEFAULT 1080 ^):
+   set /p opt6_opt3_httpsPort= Please input - Https Port ^(DEFAULT 1080 ^):
+   if "!opt6_opt3_proxyHost!"=="" ( set "opt6_opt3_proxyHost=http://127.0.0.1" )
+   if "!opt6_opt3_httpPort!"=="" ( set "opt6_opt3_httpPort=1080" )
+   if "!opt6_opt3_httpsPort!"=="" ( set "opt6_opt3_httpsPort=1080" )
    call command\Config.bat ProxyHost !opt6_opt3_proxyHost!
    call command\Config.bat Http !opt6_opt3_httpPort!
    call command\Config.bat Https !opt6_opt3_httpsPort!
@@ -415,10 +537,10 @@ goto PleaseRerun
 
 rem ================= FUNCTIONS =================
 
-:CheckAdbConnect
-for /f "tokens=1*" %%g IN ('%adbBin% connect 127.0.0.1:5555') do set adbCheck=%%g
-if "%adbCheck%"=="cannot"
-echo %adbCheck%
+REM :CheckAdbConnect
+REM for /f "tokens=1*" %%g IN ('%adbBin% connect 127.0.0.1:5555') do set adbCheck=%%g
+REM if "%adbCheck%"=="cannot"
+REM echo %adbCheck%
 
 :ReturnToSetting
 echo. & echo Press any key to continue...
@@ -458,7 +580,7 @@ for /f "tokens=3" %%a in ('reg query HKEY_LOCAL_MACHINE\SOFTWARE\BlueStacks_bgp6
 set SerialRealtime=127.0.0.1:%port%
 echo ====================================================================================================
 if "%KillServer%"=="enable" (
-   %adbBin% kill-server > nul 2>&1 
+   %adbBin% kill-server > nul 2>&1
    )
 echo == connecting at %SerialRealtime%
 %adbBin% connect %SerialRealtime%
@@ -487,9 +609,10 @@ if "%KillServer%"=="enable" ( %adbBin% kill-server > nul 2>&1 )
 echo ====================================================================================================
 if errorlevel 1 (
    echo == The connection was not successful on SERIAL: %Serial%
+   echo == If you use LDplayer, Memu, NoxAppPlayer or MuMuPlayer, you may need replace your emulator ADB.
    echo == Check our wiki for more info
    pause > NUL
-   start https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Installation_en
+   start https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/FAQ_en_cn
    goto Serial_setting
    echo ====================================================================================================
    ) else (
@@ -504,10 +627,10 @@ if "%IsUsingGit%"=="no" goto :eof
 if "%Region%"=="cn" goto UpdateChecker_AlasGitee
 for /f %%i in ('%gitBin%  rev-parse --abbrev-ref HEAD') do set cfg_branch=%%i
 "%curlBin%" -s https://api.github.com/repos/lmeszinc/AzurLaneAutoScript/commits/%cfg_branch%?access_token=%GithubToken% > "%root%\toolkit\api_git.json"
-for /f "skip=1 tokens=2 delims=:," %%I IN (%root%\toolkit\api_git.json) DO IF NOT DEFINED sha SET sha=%%I 
+for /f "skip=1 tokens=2 delims=:," %%I IN (%root%\toolkit\api_git.json) DO IF NOT DEFINED sha SET sha=%%I
 set sha=%sha:"=%
 set sha=%sha: =%
-for /f "skip=14 tokens=3 delims=:" %%I IN (%root%\toolkit\api_git.json) DO IF NOT DEFINED message SET message=%%I 
+for /f "skip=14 tokens=3 delims=:" %%I IN (%root%\toolkit\api_git.json) DO IF NOT DEFINED message SET message=%%I
 set message=%message:"=%
 set message=%message:,=%
 set message=%message:\n=%
@@ -522,10 +645,10 @@ call :gmTime GIT_CTIME %%B
 if "%Region%"=="origin" goto time_parsed
 for /f %%i in ('%gitBin%  rev-parse --abbrev-ref HEAD') do set cfg_branch=%%i
 "%curlBin%" -s https://gitee.com/api/v5/repos/lmeszinc/AzurLaneAutoScript/commits/%cfg_branch% > "%root%\toolkit\api_git.json"
-for /f "tokens=5 delims=:," %%I IN (%root%\toolkit\api_git.json) DO IF NOT DEFINED sha SET sha=%%I 
+for /f "tokens=5 delims=:," %%I IN (%root%\toolkit\api_git.json) DO IF NOT DEFINED sha SET sha=%%I
 set sha=%sha:"=%
 set sha=%sha: =%
-for /f "tokens=25 delims=:" %%I IN (%root%\toolkit\api_git.json) DO IF NOT DEFINED message SET message=%%I 
+for /f "tokens=25 delims=:" %%I IN (%root%\toolkit\api_git.json) DO IF NOT DEFINED message SET message=%%I
 set message=%message:"=%
 set message=%message:,=%
 set message=%message:\ntree=%
