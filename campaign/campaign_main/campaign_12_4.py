@@ -68,6 +68,8 @@ class Campaign(CampaignBase):
             return True
         if self.clear_potential_roadblocks([road_main]):
             return True
+        if self.clear_enemy(scale=(3,)):
+            return True
         return self.battle_default()
 
     # def battle_2(self):
@@ -84,12 +86,16 @@ class Campaign(CampaignBase):
             return True
         if self.clear_potential_roadblocks([road_main]):
             return True
+        if self.clear_enemy(scale=(3,)):
+            return True
         return self.battle_default()
 
     def battle_4(self):
         if self.clear_roadblocks([road_main]):
             return True
         if self.clear_potential_roadblocks([road_main]):
+            return True
+        if self.clear_enemy(scale=(3,)):
             return True
         return self.battle_default()
 

@@ -242,13 +242,9 @@ $RECYCLE.BIN/
 adb_port.txt
 adb_port.ini
 *.exe
-<<<<<<< HEAD
-*.zip
-=======
 !popup.exe
 <<<<<<< HEAD
 *.zip
->>>>>>> 3790589c75017704a91c2301d149113592a5dfcd
 =======
 *.zip
 console.bat

@@ -189,8 +189,9 @@ class Fleet(Camera, MapOperation, AmbushHandler):
             self.device.click(grid)
             arrived = False
             # Wait to confirm fleet arrived. It does't appear immediately if fleet in combat .
-            arrive_timer = Timer(0.5 + self.round_wait, count=2)
-            arrive_unexpected_timer = Timer(1.5 + self.round_wait, count=6)
+            extra = 4.5 if self.config.SUBMARINE_MODE == 'hunt_only' else 0
+            arrive_timer = Timer(0.5 + self.round_wait + extra, count=2)
+            arrive_unexpected_timer = Timer(1.5 + self.round_wait + extra, count=6)
             # Wait after ambushed.
             ambushed_retry = Timer(0.5)
             # If nothing happens, click again.
@@ -200,19 +201,6 @@ class Fleet(Camera, MapOperation, AmbushHandler):
             while 1:
                 self.device.screenshot()
                 grid.image = np.array(self.device.image)
-
-                # Ambush
-                if self.handle_ambush():
-                    self.hp_get()
-                    ambushed_retry.start()
-                    walk_timeout.reset()
-
-                # Mystery
-                mystery = self.handle_mystery(button=grid)
-                if mystery:
-                    self.mystery_count += 1
-                    result = 'mystery'
-                    result_mystery = mystery
 
                 # Combat
                 if self.config.ENABLE_MAP_FLEET_LOCK and not self.is_in_map():
@@ -236,6 +224,19 @@ class Fleet(Camera, MapOperation, AmbushHandler):
                     self.handle_boss_appear_refocus()
                     grid = self.convert_map_to_grid(location)
                     walk_timeout.reset()
+
+                # Ambush
+                if self.handle_ambush():
+                    self.hp_get()
+                    ambushed_retry.start()
+                    walk_timeout.reset()
+
+                # Mystery
+                mystery = self.handle_mystery(button=grid)
+                if mystery:
+                    self.mystery_count += 1
+                    result = 'mystery'
+                    result_mystery = mystery
 
                 # Cat attack animation
                 if self.handle_map_cat_attack():
